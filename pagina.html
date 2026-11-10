@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Trascrittore .brAIan</title>
+<style>
+:root{--bg:#07090c;--pan:#10141b;--pan2:#0c1016;--tx:#e8edf2;--mu:#9aa6b2;--co:#ff8a65;--cy:#4dd9e8;--am:#ffc857;--ro:#ff5d5d;--gi:#ffd23f;--ve:#5ad28c;--bo:#1d2430}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--tx);font:16px/1.6 "Segoe UI",system-ui,sans-serif}
+body::before{content:"";position:fixed;inset:0;pointer-events:none;
+  background:radial-gradient(1200px 600px at 80% -10%,rgba(77,217,232,.08),transparent 60%),radial-gradient(900px 500px at -10% 110%,rgba(255,138,101,.07),transparent 60%)}
+main{position:relative;max-width:860px;margin:auto;padding:30px 18px 80px}
+.eti{color:var(--co);letter-spacing:.14em;font-size:13px;text-transform:uppercase}
+h1{font-size:38px;line-height:1.12;margin:10px 0 6px}
+.sotto{color:#cfd7df;margin:0 0 22px}
+.box{background:linear-gradient(180deg,#141a22,#0e1218);border:1px solid #233041;border-radius:14px;padding:20px}
+label.cam{display:block;color:var(--mu);font-size:13px;letter-spacing:.08em;text-transform:uppercase;margin-bottom:8px}
+.riga{display:flex;gap:10px;flex-wrap:wrap}
+input[type=url]{flex:1;min-width:240px;background:var(--pan2);border:1px solid #2a3647;color:var(--tx);border-radius:10px;padding:14px 16px;font-size:16px;outline:none}
+input[type=url]:focus{border-color:var(--cy);box-shadow:0 0 0 3px rgba(77,217,232,.15)}
+button{background:var(--co);color:#1b0d07;border:0;border-radius:10px;padding:14px 22px;font-size:16px;font-weight:600;cursor:pointer}
+button:disabled{opacity:.5;cursor:default}
+button.sec{background:transparent;color:var(--cy);border:1px solid #2a4a55;font-weight:500;padding:10px 16px;font-size:14px}
+.opz{margin-top:14px;color:#cfd7df;display:flex;align-items:center;gap:10px;font-size:15px}
+.opz input{width:18px;height:18px;accent-color:var(--cy)}
+.err{color:var(--ro);font-size:14px;margin-top:8px;min-height:1em}
+.card{background:var(--pan);border-left:4px solid var(--cy);border-radius:0 12px 12px 0;padding:14px 18px;margin:18px 0}
+.card.ok{border-color:var(--ve)}.card.ko{border-color:var(--ro)}
+.card h3{margin:0 0 8px;font-size:20px}
+#log{font-family:Consolas,monospace;font-size:13px;color:#b9c4cf;max-height:280px;overflow:auto;margin:0;padding:0;list-style:none}
+#log li{padding:2px 0}#log li:last-child{color:var(--am)}
+#log li::before{content:"› ";color:var(--cy)}
+.pulsa{display:inline-block;width:10px;height:10px;border-radius:50%;background:var(--cy);margin-right:8px;animation:p 1.2s infinite}
+@keyframes p{50%{opacity:.25}}
+.azioni{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}
+.azioni a{color:var(--bg);background:var(--cy);padding:10px 16px;border-radius:10px;text-decoration:none;font-weight:600;font-size:14px}
+h2{font-size:22px;margin:34px 0 10px}
+.arch{display:grid;gap:10px}
+.arch a{display:block;background:var(--pan);border:1px solid var(--bo);border-radius:10px;padding:12px 16px;color:var(--tx);text-decoration:none}
+.arch a:hover{border-color:var(--cy)}
+.arch small{color:var(--mu)}
+.leg{color:var(--mu);font-size:14px;margin-top:6px}
+</style>
+</head>
+<body>
+<main>
+  <div class="eti">.brAIan · strumenti · trascrittore</div>
+  <h1>Dammi un video,<br>ti do il succo.</h1>
+  <p class="sotto">Trascrizione parola per parola, argomenti pesati a colori, diagrammi e immagini collegati agli argomenti.
+    Tutto in locale: analizza un modello sul tuo computer, niente esce di casa.</p>
+
+  <div class="box">
+    <label class="cam" for="url">Link del video YouTube</label>
+    <div class="riga">
+      <input id="url" type="url" placeholder="https://youtu.be/…" autocomplete="off">
+      <button id="vai">Trascrivi</button>
+    </div>
+    <label class="opz"><input id="foto" type="checkbox" checked> Cerca anche diagrammi, slide e immagini utili (più lento)</label>
+    <div class="err" id="err"></div>
+    <div class="leg">🔴 fondamentale · 🟡 importante · 🟢 contesto</div>
+  </div>
+
+  <div class="card" id="stato" hidden>
+    <h3 id="titoloStato"><span class="pulsa"></span>Al lavoro…</h3>
+    <ul id="log"></ul>
+    <div class="azioni" id="azioni"></div>
+  </div>
+
+  <h2>Trascrizioni fatte</h2>
+  <div class="arch" id="arch"><small>Ancora nessuna.</small></div>
+</main>
+<script>
+const $ = s => document.querySelector(s);
+let timer = null;
+
+async function archivio() {
+  const r = await fetch('/api/archivio'); const a = await r.json();
+  $('#arch').innerHTML = a.length ? a.map(x =>
+    `<a href="/out/${encodeURIComponent(x.cartella)}/trascrizione.html" target="_blank">${esc(x.titolo)}<br>
+     <small>${esc(x.canale)} · ${x.immagini} immagini · ${esc(x.cartella)}</small></a>`).join('') : '<small>Ancora nessuna.</small>';
+}
+function esc(s){return String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+
+async function stato() {
+  const r = await fetch('/api/stato'); const s = await r.json();
+  $('#stato').hidden = false;
+  $('#log').innerHTML = s.log.map(m => `<li>${esc(m)}</li>`).join('');
+  $('#log').scrollTop = 1e9;
+  if (s.attivo) return;
+  clearInterval(timer); timer = null; $('#vai').disabled = false;
+  if (s.errore) {
+    $('#stato').className = 'card ko'; $('#titoloStato').textContent = 'Qualcosa è andato storto';
+    $('#azioni').innerHTML = `<small>${esc(s.errore)}</small>`;
+  } else if (s.cartella) {
+    const c = encodeURIComponent(s.cartella);
+    $('#stato').className = 'card ok'; $('#titoloStato').textContent = 'Fatto';
+    $('#azioni').innerHTML = `<a href="/out/${c}/trascrizione.html" target="_blank">Apri la versione colorata</a>
+      <a href="/out/${c}/trascrizione.md" target="_blank">Apri il file MD</a>
+      <button class="sec" id="apri">Apri la cartella</button>`;
+    $('#apri').onclick = () => fetch('/api/apri', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({cartella: s.cartella})});
+    archivio();
+  }
+}
+
+$('#vai').onclick = async () => {
+  $('#err').textContent = '';
+  const url = $('#url').value.trim();
+  if (!/^https?:\/\//.test(url)) { $('#err').textContent = 'Incolla un link YouTube che inizia con https://'; return; }
+  const r = await fetch('/api/avvia', {method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({url, fotogrammi: $('#foto').checked})});
+  const d = await r.json();
+  if (!r.ok) { $('#err').textContent = d.errore || 'Errore'; return; }
+  $('#vai').disabled = true; $('#stato').className = 'card';
+  $('#titoloStato').innerHTML = '<span class="pulsa"></span>Al lavoro…'; $('#azioni').innerHTML = '';
+  timer = setInterval(stato, 1500); stato();
+};
+$('#url').addEventListener('input', () => $('#err').textContent = '');
+$('#url').addEventListener('keydown', e => { if (e.key === 'Enter') $('#vai').click(); });
+archivio(); fetch('/api/stato').then(r => r.json()).then(s => { if (s.attivo) { $('#vai').disabled = true; timer = setInterval(stato, 1500); stato(); } });
+</script>
+</body>
+</html>

@@ -1,0 +1,7 @@
+venv/
+.venv/
+__pycache__/
+*.pyc
+ultimo_errore.txt
+Trascrizioni/
+trascrizioni/

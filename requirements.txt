@@ -1,0 +1,8 @@
+yt-dlp>=2025.1.1
+youtube-transcript-api>=1.2
+faster-whisper>=1.1
+av>=12
+pillow>=10
+# Solo con scheda NVIDIA su Windows/Linux, per Whisper sulla GPU (facoltativo):
+# nvidia-cublas-cu12
+# nvidia-cudnn-cu12
